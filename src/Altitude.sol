@@ -12,23 +12,36 @@ struct Force {
     uint time;
 }
 
+struct OwnershipRequest {
+    uint coin;
+    uint block_number;
+    uint time;
+    bytes32 responseHash;
+}
+
 contract Altitude is Ownable2Step {
     string internal constant ERROR_MINT_EMPTY = "E1";
     string internal constant ERROR_FORCE_NO_COIN = "E2";
     string internal constant ERROR_SLASH_NO_FORCE = "E3";
-    string internal constant ERROR_SLASH_NOT_OLD = "E3";
+    string internal constant ERROR_SLASH_NOT_OLD = "E4";
+    string internal constant ERROR_DOUBLE_RESPONSE = "E5";
+    string internal constant ERROR_NONMATCHING_RESPONSE = "E6";
     using IncrementalBinaryTree for IncrementalTreeData;
 
     uint internal constant ZERO = 0;
     uint internal constant DEPTH = 20;
     uint internal constant FORCE_WAIT = 1 days;
+    uint internal constant REQUEST_WAIT = 1 days;
 
     IncrementalTreeData public mintTree;
+    uint[] public stateHistory;
     uint public stateRoot;
+
+    OwnershipRequest[] public ownershipRequests;
 
     Force[] public forcedInclusions;
 
-    uint maxCoin = 1;
+    uint maxCoin = 0;
 
     constructor(address _owner) {
         _transferOwnership(_owner);
@@ -53,7 +66,7 @@ contract Altitude is Ownable2Step {
         }));
     }
 
-    function slash(uint i) external {
+    function slashForLateInclusion(uint i) external {
         require(forcedInclusions[i].time != 0, ERROR_SLASH_NO_FORCE);
         require (block.timestamp - forcedInclusions[i].time > FORCE_WAIT, ERROR_SLASH_NOT_OLD);
 
@@ -70,4 +83,42 @@ contract Altitude is Ownable2Step {
 
     // any eth sent is part of the slashable stake
     receive() external payable {}
+
+    function requestOwnerShipProof(uint coin, uint block_number) external {
+        ownershipRequests.push(OwnershipRequest({
+            coin: coin,
+            block_number: block_number,
+            time: block.timestamp,
+            responseHash: 0
+        }));
+    }
+
+    function slashForLateResponse(uint i) external {
+        require(ownershipRequests[i].time != 0, ERROR_SLASH_NO_FORCE);
+        require (block.timestamp - ownershipRequests[i].time > REQUEST_WAIT, ERROR_SLASH_NOT_OLD);
+
+        // SLASH
+    }
+
+    function respondToOwnershipRequest(uint i, bool[DEPTH] calldata pathIndices, uint[DEPTH] calldata pathElements, uint lower_coin, uint upper_coin, uint owner) external {
+        require(ownershipRequests[i].time != 0, ERROR_DOUBLE_RESPONSE);
+        ownershipRequests[i].time = 0;
+        ownershipRequests[i].responseHash = keccak256(abi.encodePacked(pathIndices, pathElements, lower_coin, upper_coin, owner));
+    }
+
+    function slashForInvalidOwnershipProof(uint i, bool[DEPTH] calldata pathIndices, uint[DEPTH] calldata pathElements, uint lower_coin, uint upper_coin, uint owner) external {
+        require(keccak256(abi.encodePacked(pathIndices, pathElements, lower_coin, upper_coin, owner)) == ownershipRequests[i].responseHash, ERROR_NONMATCHING_RESPONSE);
+        // TODO: require that the proof is valid for that `block_number`th block in stateHistory
+
+        // Slash
+    }
+
+    function slashForBrokenPromise() external {
+        // TODO: show that the promise was signed by the operator (does transferable ownership make this tricky?)
+        // TODO: show that the promise contradicts a response in ownershipRequests
+
+        // Slash
+    }
+
+
 }

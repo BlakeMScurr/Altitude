@@ -12,6 +12,7 @@
 ## Smart contracts
 
 To run and test smart contracts:
+- forge install
 - forge test
 
 ## Circuits
