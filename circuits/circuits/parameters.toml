@@ -1,0 +1,23 @@
+# Each coin is represented by coin_bits length number.
+# We want to minimise coin_bits to reduce the calldata cost of onchain forcing and claiming.
+# - V1 is capped to ~$100M in TVL for safety reasons
+# - We need 1 cent increments
+# - The Eth price will probably 50x at most
+# 100,000,000 * 100 * 50 possible coins, which fits in 40 bits or 5 bytes.
+coin_bits = 40
+
+# The claiming process needs a description of the full state history to verify claims, so we store
+# the each state root as a leaf in a merkle tree. This history merkle tree is capped at history_depth leaves.
+# history_depth is 20, since we can handle 4 blocks a day for a decade. We will probably mostly do 1 block per day, and v1 will probably only last a few years.
+history_depth = 20
+
+# The state of the validium is represented by a merkle tree, where every coin range is a leaf. The depth of this tree is state_depth.
+# We set state_depth to 40 so that it can, in principle handle a different entry per coin, this avoids an attack vector where the state is filled up
+state_depth = 40
+
+# The filtered tree is a list of valid claims
+# filtered_depth is 40 to prevent it being filled up. The only cost is prover time, as the filtered trees are only used within ZKPs
+filtered_depth = 40
+
+# field_size is 254 bits for the grumpkin/bn254 and pallas/vesta cycles
+field_size = 254

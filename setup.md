@@ -24,6 +24,4 @@ To run and test smart contracts:
 - Run the tests in [`mint.rs`](./circuits/src/mint.rs) with `cargo test` which reads input data from [`mint.json`](./circuits/inputs/mint.json`) and runs the mint circuit twice through Nova Scotia. You can also run the test directly from VS Code if you have the right setup.
 
 If you want to generate a new input data for `mint.json`:
-- Replace the number at [`circuits/scripts/node_modules/vmtree-sdk/src/utils.js#L8`](./circuits/scripts/node_modules/vmtree-sdk/src/utils.js#L8) with `28948022309329048855892746252171976963363056481941647379679742748393362948097`. This is because our custom circom uses Vesta curve which has a different prime.
-- Run `node mint.js` in [`circuits/scripts`](./circuits/scripts/) which prints the data for 2 iterations.
-- Stringify any remaining numbers and copy it to [`mint.json`](./circuits/inputs/mint.json`).
+- Run `node mint.js` in [`circuits/scripts`](./circuits/scripts/) which prints the data for 2 iterations and copy the output to [`mint.json`](./circuits/inputs/mint.json`).

@@ -15,4 +15,6 @@ nova-snark = { version = "0.21.0", default-features = false }
 serde = "1.0"
 serde_json = "1.0.96"
 ff = { version = "0.13", features = ["derive"]}
-
+pasta_curves = "0.5.1"
+nova_macro = { path = "nova_macro" }
+nova_macro_derive = { path = "nova_macro/nova_macro_derive" }

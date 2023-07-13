@@ -1,43 +1,8 @@
 import { ProjectivePoint, signAsync } from '@noble/secp256k1';
 import { default as vmtree } from 'vmtree-sdk';
-
-import { MerkleTree as FixedMerkleTree } from "fixed-merkle-tree";
-
-class MerkleTree extends FixedMerkleTree {
-    constructor({ hasher, levels = 20, leaves = [], zero = 0 }) {
-        super(levels, leaves, {
-            hashFunction: (left, right) => hasher([left, right]),
-            zeroElement: zero,
-        });
-    };
-};
+import { bigint_to_Uint8Array, bigint_to_array, stringify_nova_json, MerkleTree } from './util.js';
 
 const stateTree = new MerkleTree({ hasher: vmtree.poseidon, levels: 3, zero: 0 });
-
-function bigint_to_array(n/*: number*/, k/*: number*/, x/*: bigint*/) {
-    let mod = 1n;
-    for (var idx = 0; idx < n; idx++) {
-        mod = mod * 2n;
-    }
-
-    let ret = [];
-    var x_temp = x;
-    for (var idx = 0; idx < k; idx++) {
-        ret.push(x_temp % mod);
-        x_temp = x_temp / mod;
-    }
-    return ret;
-}
-
-// bigendian
-function bigint_to_Uint8Array(x) {
-    var ret = new Uint8Array(32);
-    for (var idx = 31; idx >= 0; idx--) {
-        ret[idx] = Number(x % 256n);
-        x = x / 256n;
-    }
-    return ret;
-}
 
 var privkeys = [88549154299169935420064281163296845505587953610183896504176354567359434168161n,
                                37706893564732085918706190942542566344879680306879183356840008504374628845468n,
@@ -48,11 +13,7 @@ var ethAddrsBigInt = [449116070504281332671503011463517494968310008447n, 1245243
 
 stateTree.update(0, vmtree.poseidon([ethAddrsBigInt[0], 0n, 10n]));
 stateTree.update(1, vmtree.poseidon([ethAddrsBigInt[1], 12n, 15n]));
-stateTree.update(2, 0);
-stateTree.update(3, 0);
-stateTree.update(4, 0);
-
-console.log(stateTree.root);
+let initial_state_root = stateTree.root.toString();
 
 async function generateInput(privKey, sender, receiver, leafCoins, leafIndex) {
     let msghash_bigint = vmtree.poseidon([leafCoins[0], leafCoins[1], receiver]);
@@ -63,7 +24,6 @@ async function generateInput(privKey, sender, receiver, leafCoins, leafIndex) {
 
     const {pathIndices, pathElements} = stateTree.path(leafIndex);
     const input = vmtree.utils.stringifyBigInts({
-        step_in: [stateTree.root],
         sender: sender,
         recipient: 0n,
         leaf_coins: leafCoins,
@@ -74,20 +34,14 @@ async function generateInput(privKey, sender, receiver, leafCoins, leafIndex) {
         msghash: bigint_to_array(64, 4, msghash_bigint),
         pubkey: [bigint_to_array(64, 4, pubKey.x), bigint_to_array(64, 4, pubKey.y)]
     });
+    stateTree.update(leafIndex, vmtree.poseidon([receiver, leafCoins[0], leafCoins[1]]));
     return input;
 }
 
-// user0 withdraws the first leaf.
-const input0 = await generateInput(privkeys[0], ethAddrsBigInt[0], 0n, [0n, 10n], 0);
-
-stateTree.update(0, vmtree.poseidon([0, 0, 10]));
-
-const input1 = await generateInput(privkeys[1], ethAddrsBigInt[1], 0n, [12n, 15n], 1);
-
-let novaJson = {};
-for (var k in input1) {
-    novaJson[k] = [input0[k], input1[k]];
-}
-
-novaJson.step_in = input1.step_in;
-console.log('novaJson', JSON.stringify(novaJson));
+console.log(stringify_nova_json({
+    step_in: [initial_state_root],
+    private_inputs: [
+        await generateInput(privkeys[0], ethAddrsBigInt[0], 0n, [0n, 10n], 0),
+        await generateInput(privkeys[1], ethAddrsBigInt[1], 0n, [12n, 15n], 1)
+    ]
+}))

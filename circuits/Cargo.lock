@@ -233,6 +233,9 @@ dependencies = [
  "ff",
  "nova-scotia",
  "nova-snark",
+ "nova_macro",
+ "nova_macro_derive",
+ "pasta_curves",
  "serde",
  "serde_json",
 ]
@@ -698,6 +701,22 @@ dependencies = [
  "sha3",
  "subtle",
  "thiserror",
+]
+
+[[package]]
+name = "nova_macro"
+version = "0.1.0"
+dependencies = [
+ "pasta_curves",
+ "serde_json",
+]
+
+[[package]]
+name = "nova_macro_derive"
+version = "0.1.0"
+dependencies = [
+ "quote",
+ "syn 1.0.109",
 ]
 
 [[package]]

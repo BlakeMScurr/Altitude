@@ -40,6 +40,21 @@ template CheckMerkleProof(levels) {
     root <== hashers[levels - 1].out;
 }
 
+template CheckMerkleProofStrict(levels) {
+    signal input leaf;
+    signal input pathElements[levels];
+    signal input pathIndices[levels];
+    signal input root;
+
+    signal calculated_root <== CheckMerkleProof(levels)(
+        leaf,
+        pathIndices,
+        pathElements
+    );
+
+    root === calculated_root;
+}
+
 template UpdateLeaf(levels) {
     signal input old_leaf;
     signal input new_leaf;
@@ -58,7 +73,7 @@ template UpdateLeaf(levels) {
     }
     // Makes sure the old leaf was in the old root at the specified position
     mpcs[0].leaf <== old_leaf;
-    mpcs.root === old_root;
+    mpcs[0].root === old_root;
 
     // Makes sure the new leaf is in the new root at the specified position with no other elements in the tree changed
     mpcs[1].leaf <== new_leaf;

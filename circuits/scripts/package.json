@@ -9,9 +9,10 @@
     "axios": "^1.2.1",
     "chai": "^4.3.6",
     "circomlibjs": "^0.1.7",
+    "ethers": "^6.6.3",
     "ts-node": "^10.9.1",
     "typescript": "^4.9.3",
-    "vmtree-sdk": "vmtree/sdk#d2b1b91c24ec8a4e70058f9f2b0db0b9651ae948"
+    "vmtree-sdk": "blakemscurr/sdk#54d03724e3487ceee7d0488a535188c692619a60"
   },
   "devDependencies": {
     "@types/node": "^18.11.16"
